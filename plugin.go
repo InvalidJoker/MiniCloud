@@ -4,16 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"minicloud/cloud"
+	"minicloud/config"
+	"minicloud/database"
 	"os"
 
+	"go.minekube.com/gate/cmd/gate"
 	"go.minekube.com/gate/pkg/edition/java/proxy"
 )
-
-type Config struct {
-	AuthToken string `json:"auth_token"`
-	Port      int    `json:"port"`
-	Interface string `json:"interface"`
-}
 
 var Plugin = proxy.Plugin{
 	Name: "MiniCloud",
@@ -22,7 +19,7 @@ var Plugin = proxy.Plugin{
 		if err != nil {
 			return err
 		}
-		var config Config
+		var config config.Config
 
 		err = json.Unmarshal(data, &config)
 
@@ -30,23 +27,17 @@ var Plugin = proxy.Plugin{
 			return err
 		}
 
-		dockerService, err := cloud.NewDockerService()
+		db, err := database.NewDatabase()
 
 		if err != nil {
 			return err
 		}
 
-		container := &cloud.DockerContainer{
-			Image: "itzg/minecraft-server",
-			ID:    "test",
-			Name:  "Test Server",
-			Settings: cloud.ServerSettings{
-				Ram:   1024,
-				Ports: []int{25565},
-			},
-		}
+		dockerService, err := cloud.NewDockerService(db, config)
 
-		dockerService.Create(container)
+		if err != nil {
+			return err
+		}
 
 		backendService := cloud.NewBackendService(dockerService)
 
@@ -54,4 +45,10 @@ var Plugin = proxy.Plugin{
 
 		return nil
 	},
+}
+
+func main() {
+	proxy.Plugins = append(proxy.Plugins, Plugin)
+
+	gate.Execute()
 }
