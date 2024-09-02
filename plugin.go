@@ -36,6 +36,18 @@ var Plugin = proxy.Plugin{
 			return err
 		}
 
+		container := &cloud.DockerContainer{
+			Image: "itzg/minecraft-server",
+			ID:    "test",
+			Name:  "Test Server",
+			Settings: cloud.ServerSettings{
+				Ram:   1024,
+				Ports: []int{25565},
+			},
+		}
+
+		dockerService.Create(container)
+
 		backendService := cloud.NewBackendService(dockerService)
 
 		go backendService.Start()
