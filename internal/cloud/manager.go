@@ -2,10 +2,14 @@ package cloud
 
 import (
 	"context"
+	"fmt"
 	"minicloud/internal/database"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/go-connections/nat"
 )
 
@@ -30,6 +34,16 @@ func (s *DockerService) CreateServer(ctx context.Context, server *database.Serve
 		env = append(env, "VERSION="+server.Version)
 	}
 
+	CreateServer(server.Name)
+	// save server data in /data/servers/servername
+
+	fmt.Printf("Source Path: %s\n", filepath.Join("data", "servers", server.Name))
+	fmt.Printf("Server Name: %s\n", server.Name)
+
+	sourcePath, err := filepath.Abs(filepath.Join("data", "servers", server.Name))
+	if err != nil {
+		return "", err
+	}
 	resp, err := s.Client.ContainerCreate(ctx, &container.Config{
 		Image: "itzg/minecraft-server",
 		ExposedPorts: nat.PortSet{
@@ -43,6 +57,13 @@ func (s *DockerService) CreateServer(ctx context.Context, server *database.Serve
 					HostIP:   "0.0.0.0",
 					HostPort: strconv.Itoa(server.Port),
 				},
+			},
+		},
+		Mounts: []mount.Mount{
+			{
+				Type:   mount.TypeBind,
+				Source: sourcePath,
+				Target: "/data",
 			},
 		},
 	}, nil, nil, server.Name)
@@ -60,7 +81,7 @@ func (s *DockerService) CreateServer(ctx context.Context, server *database.Serve
 
 	server.ID = resp.ID
 
-	s.Database.Create(server)
+	s.Database.Save(server)
 
 	return resp.ID, nil
 
@@ -78,7 +99,14 @@ func (s *DockerService) LoadServers(ctx context.Context) error {
 	for _, server := range servers {
 		if server.ID != "" {
 			if err := s.StartServer(ctx, &server); err != nil {
-				return err
+				if strings.Contains(err.Error(), "container already started") {
+					continue
+				}
+				if strings.Contains(err.Error(), "No such container") {
+					if _, err := s.CreateServer(ctx, &server); err != nil {
+						return err
+					}
+				}
 			}
 		} else {
 			if _, err := s.CreateServer(ctx, &server); err != nil {
@@ -90,4 +118,15 @@ func (s *DockerService) LoadServers(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (s *DockerService) StopServer(ctx context.Context, server *database.Server) error {
+	return s.Client.ContainerStop(ctx, server.ID, container.StopOptions{})
+}
+
+func (s *DockerService) DeleteServer(ctx context.Context, server *database.Server) error {
+	if err := s.StopServer(ctx, server); err != nil {
+		return err
+	}
+	return s.Client.ContainerRemove(ctx, server.ID, container.RemoveOptions{})
 }

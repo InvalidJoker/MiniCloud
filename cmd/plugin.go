@@ -17,7 +17,8 @@ import (
 var Plugin = proxy.Plugin{
 	Name: "MiniCloud",
 	Init: func(ctx context.Context, p *proxy.Proxy) error {
-		data, err := os.ReadFile("config.json")
+		cloud.CreateDataFolder()
+		data, err := os.ReadFile("data/config/config.json")
 		if err != nil {
 			return err
 		}
