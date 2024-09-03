@@ -2,6 +2,7 @@ package rest
 
 import (
 	"minicloud/internal/cloud"
+	"minicloud/internal/rest/routes"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
@@ -9,7 +10,7 @@ import (
 
 type BackendService struct {
 	DockerService *cloud.DockerService
-	Fiber         *fiber.App
+	Router        *routes.Router
 }
 
 func NewBackendService(dockerService *cloud.DockerService) *BackendService {
@@ -23,7 +24,7 @@ func (b *BackendService) Start() {
 
 	app.Post("/start", b.start)
 
-	b.Fiber = app
+	b.Router.Fiber = app
 
 	http.ListenAndServe(":8080", nil)
 

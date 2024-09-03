@@ -26,6 +26,7 @@ func (s *DockerService) CreateServer(ctx context.Context, req *database.CreateSe
 		}
 
 		s.Database.Create(&template)
+		CreateTemplate(template.Name)
 
 	}
 
@@ -163,4 +164,21 @@ func (s *DockerService) LoadServers(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (s *DockerService) DeleteServer(ctx context.Context, server *database.Server) error {
+	if err := s.Client.ContainerStop(ctx, server.ID, container.StopOptions{}); err != nil {
+		return err
+	}
+
+	if err := s.Client.ContainerRemove(ctx, server.ID, container.RemoveOptions{}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+
+func (s *DockerService) StopServer(ctx context.Context, server *database.Server) error {
+	return s.Client.ContainerStop(ctx, server.ID, container.StopOptions{})
 }
