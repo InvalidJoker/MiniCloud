@@ -8,17 +8,24 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/go-connections/nat"
 )
 
-func (s *DockerService) CreateServer(ctx context.Context, server *database.Server) (string, error) {
+type DockerServer struct {
+	Server *database.Server
+	Online bool
+	Stream *types.HijackedResponse
+}
+
+func (s *DockerService) CreateServer(ctx context.Context, server *database.Server) (DockerServer, error) {
 
 	// check if container already exists
 	_, err := s.Client.ContainerInspect(ctx, server.Name)
 	if err == nil {
-		return "", nil
+		return DockerServer{}, fmt.Errorf("container already exists")
 	}
 
 	env := []string{
@@ -44,7 +51,7 @@ func (s *DockerService) CreateServer(ctx context.Context, server *database.Serve
 
 	sourcePath, err := filepath.Abs(filepath.Join("data", "servers", server.Name))
 	if err != nil {
-		return "", err
+		return DockerServer{}, err
 	}
 	resp, err := s.Client.ContainerCreate(ctx, &container.Config{
 		Image: "itzg/minecraft-server",
@@ -70,22 +77,36 @@ func (s *DockerService) CreateServer(ctx context.Context, server *database.Serve
 		},
 	}, nil, nil, server.Name)
 	if err != nil {
-		return "", err
+		return DockerServer{}, err
 	}
 
 	if err := s.Client.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
-		return "", err
+		return DockerServer{}, err
 	}
 
 	if err := s.RegisterServer(ctx, server); err != nil {
-		return "", err
+		return DockerServer{}, err
 	}
 
 	server.ID = resp.ID
 
 	s.Database.Save(server)
 
-	return resp.ID, nil
+	st, err := s.Client.ContainerAttach(ctx, resp.ID, container.AttachOptions{
+		Stream: true,
+		Stdin:  true,
+		Stdout: true,
+		Stderr: true,
+	})
+	if err != nil {
+		return DockerServer{}, err
+	}
+
+	return DockerServer{
+		Server: server,
+		Online: true,
+		Stream: &st,
+	}, nil
 
 }
 
