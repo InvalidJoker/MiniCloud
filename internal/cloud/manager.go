@@ -8,17 +8,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/go-connections/nat"
 )
-
-type DockerServer struct {
-	Server *database.Server
-	Online bool
-	Stream *types.HijackedResponse
-}
 
 func (s *DockerService) CreateServer(ctx context.Context, server *database.Server) (DockerServer, error) {
 
@@ -104,7 +97,6 @@ func (s *DockerService) CreateServer(ctx context.Context, server *database.Serve
 
 	return DockerServer{
 		Server: server,
-		Online: true,
 		Stream: &st,
 	}, nil
 
@@ -141,15 +133,4 @@ func (s *DockerService) LoadServers(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-func (s *DockerService) StopServer(ctx context.Context, server *database.Server) error {
-	return s.Client.ContainerStop(ctx, server.ID, container.StopOptions{})
-}
-
-func (s *DockerService) DeleteServer(ctx context.Context, server *database.Server) error {
-	if err := s.StopServer(ctx, server); err != nil {
-		return err
-	}
-	return s.Client.ContainerRemove(ctx, server.ID, container.RemoveOptions{})
 }
