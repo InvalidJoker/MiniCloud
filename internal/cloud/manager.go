@@ -24,6 +24,8 @@ func (s *DockerService) CreateServer(ctx context.Context, server *database.Serve
 	env := []string{
 		"EULA=TRUE",
 		"ENABLE_RCON=false",
+		"ONLINE_MODE=false",
+		"USE_NATIVE_TRANSPORT=false",
 	}
 
 	if server.Software != "" {
