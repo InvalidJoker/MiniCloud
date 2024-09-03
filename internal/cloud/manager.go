@@ -13,12 +13,34 @@ import (
 	"github.com/docker/go-connections/nat"
 )
 
-func (s *DockerService) CreateServer(ctx context.Context, server *database.Server) (DockerServer, error) {
+func (s *DockerService) CreateServer(ctx context.Context, req *database.CreateServerRequest) (DockerServer, error) {
+
+	var template database.Template
+	s.Database.Where("name = ?", req.Template).First(&template)
+
+	if template.Name == "" {
+		// create default template
+		template = database.Template{
+			Name:     req.Template,
+			Software: "paper",
+		}
+
+		s.Database.Create(&template)
+
+	}
+
+	server := &database.Server{
+		Name:     req.Name,
+		Port:     req.Port,
+		Lobby:    req.Lobby,
+		Version:  req.Version,
+		Template: template,
+	}
 
 	// check if container already exists
 	_, err := s.Client.ContainerInspect(ctx, server.Name)
 	if err == nil {
-		return DockerServer{}, fmt.Errorf("container already exists")
+		return DockerServer{}, nil
 	}
 
 	env := []string{
@@ -126,13 +148,13 @@ func (s *DockerService) LoadServers(ctx context.Context) error {
 					continue
 				}
 				if strings.Contains(err.Error(), "No such container") {
-					if _, err := s.CreateServer(ctx, &server); err != nil {
+					if _, err := s.CreateServer(ctx, server.ToRequest()); err != nil {
 						return err
 					}
 				}
 			}
 		} else {
-			if _, err := s.CreateServer(ctx, &server); err != nil {
+			if _, err := s.CreateServer(ctx, server.ToRequest()); err != nil {
 				return err
 			}
 		}

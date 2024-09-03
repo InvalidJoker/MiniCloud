@@ -7,6 +7,7 @@ import (
 	"minicloud/internal/config"
 	"minicloud/internal/database"
 	"minicloud/internal/events"
+	"minicloud/internal/rest"
 	"os"
 
 	"github.com/robinbraemer/event"
@@ -54,7 +55,7 @@ var Plugin = proxy.Plugin{
 			return err
 		}
 
-		backendService := cloud.NewBackendService(dockerService)
+		backendService := rest.NewBackendService(dockerService)
 
 		eventHandler := events.NewEventHandlers(db, p)
 

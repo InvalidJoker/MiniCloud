@@ -6,9 +6,11 @@ import (
 	"net"
 
 	"go.minekube.com/gate/pkg/edition/java/proxy"
+	"gorm.io/gorm"
 )
 
 type Server struct {
+	gorm.Model
 	ID   string `gorm:"primaryKey"`
 	Name string `gorm:"unique"`
 	Port int    `gorm:"unique"`
@@ -17,12 +19,23 @@ type Server struct {
 
 	Lobby bool `gorm:"default:false"`
 
-	Template Template
+	TemplateID string
+	Template   Template `gorm:"foreignKey:TemplateID"`
 }
 
 type Template struct {
-	Name     string
-	Software string
+	gorm.Model
+	Name     string `gorm:"primaryKey"`
+	Software string `gorm:"default:paper"`
+}
+
+type CreateServerRequest struct {
+	Name string
+	Port int
+
+	Version  string
+	Lobby    bool
+	Template string
 }
 
 func (server *Server) GetServerInfo() proxy.ServerInfo {
@@ -45,4 +58,14 @@ func (t *Template) MoveToServer(server string) {
 		fmt.Println(err)
 	}
 
+}
+
+func (server *Server) ToRequest() *CreateServerRequest {
+	return &CreateServerRequest{
+		Name:     server.Name,
+		Port:     server.Port,
+		Version:  server.Version,
+		Lobby:    server.Lobby,
+		Template: server.Template.Name,
+	}
 }

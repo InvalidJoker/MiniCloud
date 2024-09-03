@@ -13,7 +13,7 @@ func NewDatabase() (*Database, error) {
 		return nil, err
 	}
 
-	db.AutoMigrate(&Server{})
+	db.AutoMigrate(&Server{}, &Template{})
 
 	return db, nil
 }
