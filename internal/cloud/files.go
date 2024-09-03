@@ -6,6 +6,7 @@ import (
 	"os"
 )
 
+
 func CreateDataFolder() {
 	os.MkdirAll("data", os.ModePerm)
 	os.MkdirAll("data/config", os.ModePerm)

@@ -28,8 +28,10 @@ func (s *DockerService) CreateServer(ctx context.Context, server *database.Serve
 		"USE_NATIVE_TRANSPORT=false",
 	}
 
-	if server.Software != "" {
-		env = append(env, "TYPE="+server.Software)
+	if server.Template.Software != "" {
+		env = append(env, "TYPE="+server.Template.Software)
+	} else {
+		env = append(env, "TYPE=PAPER")
 	}
 
 	if server.Version != "" {
@@ -37,6 +39,9 @@ func (s *DockerService) CreateServer(ctx context.Context, server *database.Serve
 	}
 
 	CreateServer(server.Name)
+
+	// move template to server
+	server.Template.MoveToServer(server.Name)
 	// save server data in /data/servers/servername
 
 	fmt.Printf("Source Path: %s\n", filepath.Join("data", "servers", server.Name))
@@ -46,12 +51,15 @@ func (s *DockerService) CreateServer(ctx context.Context, server *database.Serve
 	if err != nil {
 		return DockerServer{}, err
 	}
+
 	resp, err := s.Client.ContainerCreate(ctx, &container.Config{
 		Image: "itzg/minecraft-server",
 		ExposedPorts: nat.PortSet{
 			"25565/tcp": struct{}{},
 		},
-		Env: env,
+		Env:         env,
+		Tty:         true,
+		AttachStdin: true,
 	}, &container.HostConfig{
 		PortBindings: nat.PortMap{
 			"25565/tcp": []nat.PortBinding{

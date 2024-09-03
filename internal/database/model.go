@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"minicloud/internal/utils"
 	"net"
 
 	"go.minekube.com/gate/pkg/edition/java/proxy"
@@ -16,6 +17,11 @@ type Server struct {
 
 	Lobby bool `gorm:"default:false"`
 
+	Template Template
+}
+
+type Template struct {
+	Name     string
 	Software string
 }
 
@@ -27,4 +33,16 @@ func (server *Server) GetServerInfo() proxy.ServerInfo {
 	}
 
 	return proxy.NewServerInfo(server.Name, ip)
+}
+
+func (t *Template) MoveToServer(server string) {
+	srcDir := fmt.Sprintf("data/templates/%s", t.Name)
+	dstDir := fmt.Sprintf("data/servers/%s", server)
+
+	err := utils.CopyDir(srcDir, dstDir)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
 }
