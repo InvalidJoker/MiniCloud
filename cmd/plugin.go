@@ -37,6 +37,16 @@ var Plugin = proxy.Plugin{
 
 		dockerService, err := cloud.NewDockerService(db, config, p)
 
+		if err != nil {
+			return err
+		}
+
+		err = dockerService.LoadServers(ctx)
+
+		if err != nil {
+			return err
+		}
+
 		err = dockerService.DockerTest(&ctx)
 
 		if err != nil {
@@ -47,12 +57,18 @@ var Plugin = proxy.Plugin{
 
 		eventHandler := events.NewEventHandlers(db, p)
 
-		event.Subscribe(p.Event(), 0, eventHandler.HandlePlayerJoin)
+		event.Subscribe(p.Event(), 0, onPlayerChooseInitialServer(eventHandler))
 
 		go backendService.Start()
 
 		return nil
 	},
+}
+
+func onPlayerChooseInitialServer(ev *events.EventHandlers) func(*proxy.PlayerChooseInitialServerEvent) {
+	return func(e *proxy.PlayerChooseInitialServerEvent) {
+		ev.HandlePlayerJoin(e)
+	}
 }
 
 func main() {

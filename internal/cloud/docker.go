@@ -37,8 +37,9 @@ func NewDockerService(
 
 func (s *DockerService) DockerTest(ctx *context.Context) error {
 	server := &database.Server{
-		Name: "test",
-		Port: 25566,
+		Name:  "test",
+		Port:  25566,
+		Lobby: true,
 	}
 
 	_, err := s.CreateServer(*ctx, server)

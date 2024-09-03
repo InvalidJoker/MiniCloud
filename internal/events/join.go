@@ -31,9 +31,9 @@ func (e *EventHandlers) HandlePlayerJoin(event *proxy.PlayerChooseInitialServerE
 	}
 
 	var server *database.Server
-	e.Database.Where(&server, "lobby = ?", true)
+	e.Database.Where("lobby = ?", true).First(&server)
 
-	if server == nil {
+	if server == nil || server.Name == "" {
 		msg := "There are currently no available servers. Please try again later."
 		player := event.Player()
 		player.Disconnect(&component.Text{Content: msg})
@@ -41,21 +41,22 @@ func (e *EventHandlers) HandlePlayerJoin(event *proxy.PlayerChooseInitialServerE
 
 	var regServer proxy.RegisteredServer
 
-	servers := e.Proxy.Servers()
-	for _, gateServer := range servers {
+	fmt.Println("Servers: ", e.Proxy.Servers())
+
+	fmt.Println("Server: ", server.Name)
+	for _, gateServer := range e.Proxy.Servers() {
+		fmt.Println("GateServer: ", gateServer.ServerInfo().Name())
 		if gateServer.ServerInfo().Name() == server.Name {
 			regServer = gateServer
 			break
 		}
 	}
 
-	fmt.Println("Server: ", server.Name)
-
 	if regServer != nil {
 		event.SetInitialServer(regServer)
 		serversMap[event.Player()] = regServer
 	} else {
-		msg := "There are currently no available servers. Please try again later."
+		msg := "There seems to be an issue with the server. Please try again later."
 		player := event.Player()
 		player.Disconnect(&component.Text{Content: msg})
 	}

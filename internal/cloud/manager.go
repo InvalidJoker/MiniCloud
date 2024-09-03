@@ -58,8 +58,36 @@ func (s *DockerService) CreateServer(ctx context.Context, server *database.Serve
 		return "", err
 	}
 
+	server.ID = resp.ID
+
 	s.Database.Create(server)
 
 	return resp.ID, nil
 
+}
+
+func (s *DockerService) StartServer(ctx context.Context, server *database.Server) error {
+	return s.Client.ContainerStart(ctx, server.ID, container.StartOptions{})
+}
+
+func (s *DockerService) LoadServers(ctx context.Context) error {
+
+	var servers []database.Server
+	s.Database.Find(&servers)
+
+	for _, server := range servers {
+		if server.ID != "" {
+			if err := s.StartServer(ctx, &server); err != nil {
+				return err
+			}
+		} else {
+			if _, err := s.CreateServer(ctx, &server); err != nil {
+				return err
+			}
+		}
+
+		s.Proxy.Register(server.GetServerInfo())
+	}
+
+	return nil
 }
