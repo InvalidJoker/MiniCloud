@@ -24,9 +24,9 @@ func NewDatabase(config2 config.Config) (*Database, error) {
 	var db *gorm.DB
 	var err error
 
-	if strings.HasPrefix(url, "mysql") || strings.HasPrefix(url, "mariadb") {
+	if config2.DatabaseType == "mysql" || strings.HasPrefix(url, "mysql") || strings.HasPrefix(url, "mariadb") {
 		db, err = NewMySQLDatabase(config2)
-	} else if strings.HasPrefix(url, "postgres") {
+	} else if config2.DatabaseType == "postgres" || strings.HasPrefix(url, "postgres") {
 		db, err = NewPostgresDatabase(config2)
 	} else {
 		return nil, fmt.Errorf("unknown database type")

@@ -12,3 +12,17 @@
 ## Installation
 
 > TODO
+
+## Development
+
+### Requirements
+
+- [Docker](https://docs.docker.com/get-docker/)
+- [Go](https://go.dev/doc/install)
+
+### Setting up the project
+
+1. Clone the repository
+2. Setup the database with `docker compose -f dev.compose.yml up -d`
+3. Copy the example.dev.config.json to config.json
+4. Run the project with `go run cmd/plugin.go`
