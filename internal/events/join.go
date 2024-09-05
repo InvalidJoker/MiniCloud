@@ -25,6 +25,8 @@ func (e *EventHandlers) HandlePlayerJoin(event *proxy.PlayerChooseInitialServerE
 		msg := "There are currently no available servers. Please try again later."
 		player := event.Player()
 		player.Disconnect(&component.Text{Content: msg})
+
+		return
 	}
 
 	var regServer proxy.RegisteredServer

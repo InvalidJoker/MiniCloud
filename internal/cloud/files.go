@@ -2,7 +2,6 @@ package cloud
 
 import (
 	"fmt"
-	"log"
 	"os"
 )
 
@@ -16,11 +15,8 @@ func CreateDataFolder() {
 func CreateTemplate(name string) string {
 	os.MkdirAll("data/templates", os.ModePerm)
 	template := fmt.Sprintf("data/templates/%s", name)
-	file, err := os.Create(template)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
+	// create template folder
+	os.MkdirAll(template, os.ModePerm)
 	return template
 
 }

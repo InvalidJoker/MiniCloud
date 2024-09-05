@@ -17,7 +17,7 @@ type Server struct {
 	Port int    `gorm:"unique"`
 
 	Lobby      bool `gorm:"default:false"`
-	Persistent bool `gorm:"default:false"`
+	Persistent bool `gorm:"default:true"`
 
 	CustomData datatypes.JSON `gorm:"type:json"`
 
@@ -55,15 +55,17 @@ func (server *Server) GetServerInfo() proxy.ServerInfo {
 	return proxy.NewServerInfo(server.Name, ip)
 }
 
-func (t *Template) MoveToServer(server string) {
+func (t *Template) MoveToServer(server string) error {
 	srcDir := fmt.Sprintf("data/templates/%s", t.Name)
 	dstDir := fmt.Sprintf("data/servers/%s", server)
 
 	err := utils.CopyDir(srcDir, dstDir)
 
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
+
+	return nil
 
 }
 

@@ -75,11 +75,11 @@ func (s *DockerService) CreateServer(ctx context.Context, req *database.CreateSe
 
 		if server.Template.CustomImageData != nil {
 			for key, value := range server.Template.CustomImageData {
-				env = append(env, fmt.Sprintf("%s=%s", key, value))
+				env = append(env, fmt.Sprintf("%s=%s", strconv.Itoa(key), string(value)))
 			}
 
 			for key, value := range server.CustomData {
-				env = append(env, fmt.Sprintf("%s=%s", key, value))
+				env = append(env, fmt.Sprintf("%s=%s", strconv.Itoa(key), string(value)))
 			}
 		}
 	}
@@ -87,8 +87,11 @@ func (s *DockerService) CreateServer(ctx context.Context, req *database.CreateSe
 	CreateServer(server.Name)
 
 	// move template to server
-	server.Template.MoveToServer(server.Name)
-	// save server data in /data/servers/servername
+	err = server.Template.MoveToServer(server.Name)
+
+	if err != nil {
+		return DockerServer{}, err
+	}
 
 	fmt.Printf("Source Path: %s\n", filepath.Join("data", "servers", server.Name))
 	fmt.Printf("Server Name: %s\n", server.Name)
@@ -160,12 +163,33 @@ func (s *DockerService) StartServer(ctx context.Context, server *database.Server
 	return s.Client.ContainerStart(ctx, server.ID, container.StartOptions{})
 }
 
+func (s *DockerService) GetServerStatus(ctx context.Context, server *database.Server) (int, error) {
+	c, err := s.Client.ContainerInspect(ctx, server.ID)
+
+	if err != nil {
+		return -1, err
+	}
+
+	if c.State.Running {
+		return 1, nil
+	}
+
+	if c.State.Restarting {
+		return 2, nil
+	}
+
+	return -1, nil
+}
+
 func (s *DockerService) LoadServers(ctx context.Context) error {
 
 	var servers []database.Server
 	s.Database.Find(&servers)
 
+	fmt.Printf("Servers: %v\n", servers)
+
 	for _, server := range servers {
+		fmt.Printf("Server: %s\n", server.Name)
 		if server.ID != "" {
 			if err := s.StartServer(ctx, &server); err != nil {
 				if strings.Contains(err.Error(), "container already started") {
@@ -205,4 +229,27 @@ func (s *DockerService) DeleteServer(ctx context.Context, server *database.Serve
 
 func (s *DockerService) StopServer(ctx context.Context, server *database.Server) error {
 	return s.Client.ContainerStop(ctx, server.ID, container.StopOptions{})
+}
+
+func (s *DockerService) ToDockerServer(server *database.Server) DockerServer {
+
+	st, err := s.Client.ContainerAttach(s.Context, server.ID, container.AttachOptions{
+		Stream: true,
+		Stdin:  true,
+		Stdout: true,
+		Stderr: true,
+	})
+
+	if err != nil {
+		return DockerServer{
+			Client: s.Client,
+			Server: server,
+		}
+	}
+
+	return DockerServer{
+		Client: s.Client,
+		Server: server,
+		Stream: &st,
+	}
 }
