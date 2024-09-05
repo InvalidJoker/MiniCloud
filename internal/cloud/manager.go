@@ -86,6 +86,10 @@ func (s *DockerService) CreateServer(ctx context.Context, req *database.CreateSe
 
 	_, err = CreateServer(server.Name)
 
+	if err != nil {
+		return DockerServer{}, err
+	}
+
 	// move template to server
 	err = server.Template.MoveToServer(server.Name)
 
