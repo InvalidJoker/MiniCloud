@@ -6,7 +6,6 @@ import (
 	"os"
 )
 
-
 func CreateDataFolder() {
 	os.MkdirAll("data", os.ModePerm)
 	os.MkdirAll("data/config", os.ModePerm)
@@ -31,4 +30,9 @@ func CreateServer(name string) string {
 	server := fmt.Sprintf("data/servers/%s", name)
 	os.MkdirAll(server, os.ModePerm)
 	return server
+}
+
+func DeleteServer(name string) {
+	server := fmt.Sprintf("data/servers/%s", name)
+	os.RemoveAll(server)
 }

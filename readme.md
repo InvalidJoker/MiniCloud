@@ -12,3 +12,9 @@
 ## Installation
 
 > TODO
+
+## Dev setup
+
+```
+go run ./cmd/plugin.go --tags "json1"
+```

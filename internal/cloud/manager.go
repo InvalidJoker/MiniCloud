@@ -23,6 +23,7 @@ func (s *DockerService) CreateServer(ctx context.Context, req *database.CreateSe
 		template = database.Template{
 			Name:     req.Template,
 			Software: "paper",
+			Version:  "latest",
 		}
 
 		s.Database.Create(&template)
@@ -34,8 +35,11 @@ func (s *DockerService) CreateServer(ctx context.Context, req *database.CreateSe
 		Name:     req.Name,
 		Port:     req.Port,
 		Lobby:    req.Lobby,
-		Version:  req.Version,
 		Template: template,
+	}
+
+	if req.CustomData != nil {
+		server.CustomData = req.CustomData
 	}
 
 	// check if container already exists
@@ -44,21 +48,40 @@ func (s *DockerService) CreateServer(ctx context.Context, req *database.CreateSe
 		return DockerServer{}, nil
 	}
 
-	env := []string{
-		"EULA=TRUE",
-		"ENABLE_RCON=false",
-		"ONLINE_MODE=false",
-		"USE_NATIVE_TRANSPORT=false",
-	}
+	var env []string
+	var image string
 
-	if server.Template.Software != "" {
-		env = append(env, "TYPE="+server.Template.Software)
+	if template.CustomImage == "" {
+		image = "itzg/minecraft-server"
+		env = append(env, []string{
+			"EULA=TRUE",
+			"ENABLE_RCON=false",
+			"ONLINE_MODE=false",
+			"USE_NATIVE_TRANSPORT=false",
+		}...)
+
+		if server.Template.Software != "" {
+			env = append(env, "TYPE="+server.Template.Software)
+		} else {
+			env = append(env, "TYPE=PAPER")
+		}
+
+		if server.Template.Version != "" {
+			env = append(env, "VERSION="+server.Template.Version)
+		}
 	} else {
-		env = append(env, "TYPE=PAPER")
-	}
+		// use custom image
+		image = server.Template.CustomImage
 
-	if server.Version != "" {
-		env = append(env, "VERSION="+server.Version)
+		if server.Template.CustomImageData != nil {
+			for key, value := range server.Template.CustomImageData {
+				env = append(env, fmt.Sprintf("%s=%s", key, value))
+			}
+
+			for key, value := range server.CustomData {
+				env = append(env, fmt.Sprintf("%s=%s", key, value))
+			}
+		}
 	}
 
 	CreateServer(server.Name)
@@ -76,7 +99,7 @@ func (s *DockerService) CreateServer(ctx context.Context, req *database.CreateSe
 	}
 
 	resp, err := s.Client.ContainerCreate(ctx, &container.Config{
-		Image: "itzg/minecraft-server",
+		Image: image,
 		ExposedPorts: nat.PortSet{
 			"25565/tcp": struct{}{},
 		},
@@ -149,6 +172,8 @@ func (s *DockerService) LoadServers(ctx context.Context) error {
 					continue
 				}
 				if strings.Contains(err.Error(), "No such container") {
+
+					server.Template.MoveToServer(server.Name)
 					if _, err := s.CreateServer(ctx, server.ToRequest()); err != nil {
 						return err
 					}
@@ -177,7 +202,6 @@ func (s *DockerService) DeleteServer(ctx context.Context, server *database.Serve
 
 	return nil
 }
-
 
 func (s *DockerService) StopServer(ctx context.Context, server *database.Server) error {
 	return s.Client.ContainerStop(ctx, server.ID, container.StopOptions{})
