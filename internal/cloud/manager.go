@@ -84,7 +84,7 @@ func (s *DockerService) CreateServer(ctx context.Context, req *database.CreateSe
 		}
 	}
 
-	CreateServer(server.Name)
+	_, err = CreateServer(server.Name)
 
 	// move template to server
 	err = server.Template.MoveToServer(server.Name)
@@ -213,7 +213,11 @@ func (s *DockerService) LoadServers(ctx context.Context) error {
 			}
 		}
 
-		s.Proxy.Register(server.GetServerInfo())
+		_, err := s.Proxy.Register(server.GetServerInfo())
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
