@@ -4,7 +4,7 @@ import (
 	"minicloud/internal/cloud"
 	"minicloud/internal/config"
 	"minicloud/internal/rest/routes"
-	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -53,7 +53,11 @@ func (b *BackendService) Start() {
 
 	router.Fiber = app
 
-	http.ListenAndServe(":8080", nil)
+	err := app.Listen(strconv.Itoa(b.Config.Port))
+
+	if err != nil {
+		panic(err)
+	}
 
 }
 

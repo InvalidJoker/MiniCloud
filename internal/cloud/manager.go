@@ -197,7 +197,11 @@ func (s *DockerService) LoadServers(ctx context.Context) error {
 				}
 				if strings.Contains(err.Error(), "No such container") {
 
-					server.Template.MoveToServer(server.Name)
+					err = server.Template.MoveToServer(server.Name)
+
+					if err != nil {
+						return err
+					}
 					if _, err := s.CreateServer(ctx, server.ToRequest()); err != nil {
 						return err
 					}

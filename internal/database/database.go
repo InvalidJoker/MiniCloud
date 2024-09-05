@@ -36,7 +36,11 @@ func NewDatabase(config2 config.Config) (*Database, error) {
 		return nil, err
 	}
 
-	db.AutoMigrate(&Server{}, &Template{})
+	err = db.AutoMigrate(&Server{}, &Template{})
+
+	if err != nil {
+		return nil, err
+	}
 
 	return db, nil
 }

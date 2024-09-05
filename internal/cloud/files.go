@@ -6,17 +6,27 @@ import (
 )
 
 func CreateDataFolder() {
-	os.MkdirAll("data", os.ModePerm)
-	os.MkdirAll("data/config", os.ModePerm)
-	os.MkdirAll("data/servers", os.ModePerm)
-	os.MkdirAll("data/templates", os.ModePerm)
+	err := os.MkdirAll("data", os.ModePerm)
+	err = os.MkdirAll("data/config", os.ModePerm)
+	err = os.MkdirAll("data/servers", os.ModePerm)
+	err = os.MkdirAll("data/templates", os.ModePerm)
+
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func CreateTemplate(name string) string {
-	os.MkdirAll("data/templates", os.ModePerm)
+	err := os.MkdirAll("data/templates", os.ModePerm)
 	template := fmt.Sprintf("data/templates/%s", name)
 	// create template folder
-	os.MkdirAll(template, os.ModePerm)
+	err = os.MkdirAll(template, os.ModePerm)
+
+	if err != nil {
+		fmt.Println(err)
+		return ""
+	}
+
 	return template
 
 }
