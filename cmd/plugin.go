@@ -55,7 +55,7 @@ var Plugin = proxy.Plugin{
 			return err
 		}
 
-		backendService := rest.NewBackendService(dockerService)
+		backendService := rest.NewBackendService(dockerService, config)
 
 		eventHandler := events.NewEventHandlers(db, p, dockerService)
 
