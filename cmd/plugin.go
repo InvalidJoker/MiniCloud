@@ -31,7 +31,7 @@ var Plugin = proxy.Plugin{
 			return err
 		}
 
-		db, err := database.NewDatabase()
+		db, err := database.NewDatabase(config)
 
 		if err != nil {
 			return err
