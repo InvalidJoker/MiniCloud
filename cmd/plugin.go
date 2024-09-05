@@ -7,6 +7,7 @@ import (
 	"minicloud/internal/config"
 	"minicloud/internal/database"
 	"minicloud/internal/events"
+	"minicloud/internal/rest"
 	"os"
 
 	"github.com/robinbraemer/event"
@@ -54,22 +55,21 @@ var Plugin = proxy.Plugin{
 			return err
 		}
 
-		backendService := cloud.NewBackendService(dockerService)
+		backendService := rest.NewBackendService(dockerService, config)
 
-		eventHandler := events.NewEventHandlers(db, p)
+		eventHandler := events.NewEventHandlers(db, p, dockerService)
 
-		event.Subscribe(p.Event(), 0, onPlayerChooseInitialServer(eventHandler))
+		event.Subscribe(p.Event(), 0, func(e *proxy.PlayerChooseInitialServerEvent) {
+			eventHandler.HandlePlayerJoin(e)
+		})
+		event.Subscribe(p.Event(), 0, func(e *proxy.ShutdownEvent) {
+			eventHandler.HandleShutdown(e)
+		})
 
 		go backendService.Start()
 
 		return nil
 	},
-}
-
-func onPlayerChooseInitialServer(ev *events.EventHandlers) func(*proxy.PlayerChooseInitialServerEvent) {
-	return func(e *proxy.PlayerChooseInitialServerEvent) {
-		ev.HandlePlayerJoin(e)
-	}
 }
 
 func main() {

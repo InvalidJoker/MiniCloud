@@ -8,18 +8,6 @@ import (
 	"go.minekube.com/gate/pkg/edition/java/proxy"
 )
 
-type EventHandlers struct {
-	Database *database.Database
-	Proxy    *proxy.Proxy
-}
-
-func NewEventHandlers(db *database.Database, p *proxy.Proxy) *EventHandlers {
-	return &EventHandlers{
-		Database: db,
-		Proxy:    p,
-	}
-}
-
 var serversMap = make(map[proxy.Player]proxy.RegisteredServer)
 
 func (e *EventHandlers) HandlePlayerJoin(event *proxy.PlayerChooseInitialServerEvent) {

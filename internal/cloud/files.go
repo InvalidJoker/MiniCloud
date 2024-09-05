@@ -31,3 +31,8 @@ func CreateServer(name string) string {
 	os.MkdirAll(server, os.ModePerm)
 	return server
 }
+
+func DeleteServer(name string) {
+	server := fmt.Sprintf("data/servers/%s", name)
+	os.RemoveAll(server)
+}
