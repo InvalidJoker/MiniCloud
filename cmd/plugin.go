@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"minicloud/internal/cloud"
+	"minicloud/internal/commands"
 	"minicloud/internal/config"
 	"minicloud/internal/database"
 	"minicloud/internal/events"
@@ -58,6 +59,10 @@ var Plugin = proxy.Plugin{
 		backendService := rest.NewBackendService(dockerService, config)
 
 		eventHandler := events.NewEventHandlers(db, p, dockerService)
+
+		commandService := commands.NewCommandService(db, dockerService, p)
+
+		commandService.Register()
 
 		event.Subscribe(p.Event(), 0, func(e *proxy.PlayerChooseInitialServerEvent) {
 			eventHandler.HandlePlayerJoin(e)
