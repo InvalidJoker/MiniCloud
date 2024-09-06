@@ -25,9 +25,10 @@ func NewBackendService(dockerService *cloud.DockerService, config config.Config)
 func (b *BackendService) Start() {
 	app := fiber.New()
 
-	app.Post("/start", b.start)
-
 	router := routes.NewRouter(b.DockerService, app)
+
+	app.Post("/server", router.CreateServer)
+	app.Post("/template", router.CreateTemplate)
 
 	if b.Config.AuthToken != "" {
 		app.Use(func(c *fiber.Ctx) error {
@@ -59,8 +60,4 @@ func (b *BackendService) Start() {
 		panic(err)
 	}
 
-}
-
-func (b *BackendService) start(c *fiber.Ctx) error {
-	return c.SendString("Hello, World 👋!")
 }
