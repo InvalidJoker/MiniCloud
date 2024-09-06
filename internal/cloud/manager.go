@@ -15,27 +15,28 @@ import (
 
 func (s *DockerService) CreateServer(ctx context.Context, req *database.CreateServerRequest) (DockerServer, error) {
 
-	var template database.Template
-	s.Database.Where("name = ?", req.Template).First(&template)
+	templateAvailable := false
 
-	if template.Name == "" {
-		// create default template
-		template = database.Template{
-			Name:     req.Template,
-			Software: "paper",
-			Version:  "latest",
+	var template database.Template
+
+	if req.Template != "" {
+		s.Database.Where("name = ?", req.Template).First(&template)
+
+		if template.Name == "" {
+			return DockerServer{}, fmt.Errorf("template not found")
 		}
 
-		s.Database.Create(&template)
-		CreateTemplate(template.Name)
-
+		templateAvailable = true
 	}
 
 	server := &database.Server{
-		Name:     req.Name,
-		Port:     req.Port,
-		Lobby:    req.Lobby,
-		Template: template,
+		Name:  req.Name,
+		Port:  req.Port,
+		Lobby: req.Lobby,
+	}
+
+	if templateAvailable {
+		server.Template = template
 	}
 
 	if req.CustomData != nil {
@@ -90,11 +91,13 @@ func (s *DockerService) CreateServer(ctx context.Context, req *database.CreateSe
 		return DockerServer{}, err
 	}
 
-	// move template to server
-	err = server.Template.MoveToServer(server.Name)
+	if templateAvailable {
+		// move template to server
+		err = server.Template.MoveToServer(server.Name)
 
-	if err != nil {
-		return DockerServer{}, err
+		if err != nil {
+			return DockerServer{}, err
+		}
 	}
 
 	fmt.Printf("Source Path: %s\n", filepath.Join("data", "servers", server.Name))
@@ -201,10 +204,13 @@ func (s *DockerService) LoadServers(ctx context.Context) error {
 				}
 				if strings.Contains(err.Error(), "No such container") {
 
-					err = server.Template.MoveToServer(server.Name)
+					if server.TemplateID != "" {
 
-					if err != nil {
-						return err
+						err = server.Template.MoveToServer(server.Name)
+
+						if err != nil {
+							return err
+						}
 					}
 					if _, err := s.CreateServer(ctx, server.ToRequest()); err != nil {
 						return err

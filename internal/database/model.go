@@ -21,8 +21,9 @@ type Server struct {
 
 	CustomData datatypes.JSON `gorm:"type:json"`
 
+	// template can be nil
 	TemplateID string
-	Template   Template `gorm:"foreignKey:TemplateID"`
+	Template   Template `gorm:"foreignkey:TemplateID"`
 }
 
 type Template struct {
