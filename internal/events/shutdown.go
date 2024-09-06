@@ -18,10 +18,18 @@ func (e *EventHandlers) HandleShutdown(event *proxy.ShutdownEvent) {
 	for _, server := range servers {
 		if server.Lobby {
 			// only stop lobby servers
-			e.Docker.StopServer(e.Docker.Context, server)
+			err := e.Docker.StopServer(e.Docker.Context, server)
+
+			if err != nil {
+				fmt.Println(err)
+			}
 		} else {
 			// delete servers from docker but not from database!!!
-			e.Docker.DeleteServer(e.Docker.Context, server)
+			err := e.Docker.DeleteServer(e.Docker.Context, server)
+
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 
 		if !server.Persistent {

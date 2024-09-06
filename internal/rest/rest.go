@@ -4,7 +4,7 @@ import (
 	"minicloud/internal/cloud"
 	"minicloud/internal/config"
 	"minicloud/internal/rest/routes"
-	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -12,7 +12,6 @@ import (
 
 type BackendService struct {
 	DockerService *cloud.DockerService
-	Router        *routes.Router
 	Config        config.Config
 }
 
@@ -26,7 +25,10 @@ func NewBackendService(dockerService *cloud.DockerService, config config.Config)
 func (b *BackendService) Start() {
 	app := fiber.New()
 
-	app.Post("/start", b.start)
+	router := routes.NewRouter(b.DockerService, app)
+
+	app.Post("/server", router.CreateServer)
+	app.Post("/template", router.CreateTemplate)
 
 	if b.Config.AuthToken != "" {
 		app.Use(func(c *fiber.Ctx) error {
@@ -50,12 +52,12 @@ func (b *BackendService) Start() {
 		})
 	}
 
-	b.Router.Fiber = app
+	router.Fiber = app
 
-	http.ListenAndServe(":8080", nil)
+	err := app.Listen(strconv.Itoa(b.Config.Port))
 
-}
+	if err != nil {
+		panic(err)
+	}
 
-func (b *BackendService) start(c *fiber.Ctx) error {
-	return c.SendString("Hello, World 👋!")
 }

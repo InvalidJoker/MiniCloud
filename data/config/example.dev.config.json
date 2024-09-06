@@ -1,0 +1,6 @@
+{
+  "auth_token": "YOUR_AUTH_TOKEN",
+  "DATABASE_TYPE": "mysql",
+  "DATABASE_URL": "root:dev@tcp(localhost:3306)/cloud?charset=utf8&parseTime=True&loc=Local",
+  "port": 3000
+}

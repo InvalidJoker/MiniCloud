@@ -2,37 +2,55 @@ package cloud
 
 import (
 	"fmt"
-	"log"
 	"os"
 )
 
+func CreateFolder(path string) {
+	err := os.MkdirAll(path, os.ModePerm)
+
+	if err != nil {
+		return
+	}
+}
+
 func CreateDataFolder() {
-	os.MkdirAll("data", os.ModePerm)
-	os.MkdirAll("data/config", os.ModePerm)
-	os.MkdirAll("data/servers", os.ModePerm)
-	os.MkdirAll("data/templates", os.ModePerm)
+	CreateFolder("data")
+	CreateFolder("data/templates")
+	CreateFolder("data/servers")
+	CreateFolder("data/config")
 }
 
 func CreateTemplate(name string) string {
-	os.MkdirAll("data/templates", os.ModePerm)
 	template := fmt.Sprintf("data/templates/%s", name)
-	file, err := os.Create(template)
+	// create template folder
+	err := os.MkdirAll(template, os.ModePerm)
+
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		return ""
 	}
-	defer file.Close()
+
 	return template
 
 }
 
-func CreateServer(name string) string {
-	os.MkdirAll("data/servers", os.ModePerm)
+func CreateServer(name string) (string, error) {
 	server := fmt.Sprintf("data/servers/%s", name)
-	os.MkdirAll(server, os.ModePerm)
-	return server
+	err := os.MkdirAll(server, os.ModePerm)
+
+	if err != nil {
+		return "", err
+	}
+
+	return server, nil
 }
 
 func DeleteServer(name string) {
 	server := fmt.Sprintf("data/servers/%s", name)
-	os.RemoveAll(server)
+	err := os.RemoveAll(server)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
 }
