@@ -37,13 +37,14 @@ type Template struct {
 }
 
 type CreateServerRequest struct {
-	Name string
-	Port int
+	Name string `validate:"required"`
+	Port int    `validate:"required"`
 
-	Lobby    bool
-	Template string
+	Lobby    bool   // default false
+	Template string // can be nil
 
-	CustomData datatypes.JSON `gorm:"type:json"`
+	// can be nil
+	CustomData datatypes.JSON `json:"custom_data"`
 }
 
 func (server *Server) GetServerInfo() proxy.ServerInfo {

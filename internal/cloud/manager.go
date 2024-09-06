@@ -11,6 +11,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/go-connections/nat"
+	"gorm.io/datatypes"
 )
 
 func (s *DockerService) CreateServer(ctx context.Context, req *database.CreateServerRequest) (DockerServer, error) {
@@ -29,10 +30,16 @@ func (s *DockerService) CreateServer(ctx context.Context, req *database.CreateSe
 		templateAvailable = true
 	}
 
+	lobby := false
+
+	if req.Lobby {
+		lobby = req.Lobby
+	}
+
 	server := &database.Server{
 		Name:  req.Name,
 		Port:  req.Port,
-		Lobby: req.Lobby,
+		Lobby: lobby,
 	}
 
 	if templateAvailable {
@@ -40,7 +47,7 @@ func (s *DockerService) CreateServer(ctx context.Context, req *database.CreateSe
 	}
 
 	if req.CustomData != nil {
-		server.CustomData = req.CustomData
+		server.CustomData = datatypes.JSON([]byte(req.CustomData))
 	}
 
 	// check if container already exists
