@@ -22,8 +22,8 @@ type Server struct {
 	CustomData datatypes.JSON `gorm:"type:json"`
 
 	// template can be nil
-	TemplateID string
-	Template   Template `gorm:"foreignkey:TemplateID"`
+	TemplateID *string   `gorm:"default:null"`          // Pointer to string to make it optional
+	Template   *Template `gorm:"foreignkey:TemplateID"` // Optional association
 }
 
 type Template struct {

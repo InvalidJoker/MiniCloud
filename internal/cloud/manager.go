@@ -43,7 +43,7 @@ func (s *DockerService) CreateServer(ctx context.Context, req *database.CreateSe
 	}
 
 	if templateAvailable {
-		server.Template = template
+		server.Template = &template
 	}
 
 	if req.CustomData != nil {
@@ -211,7 +211,13 @@ func (s *DockerService) LoadServers(ctx context.Context) error {
 				}
 				if strings.Contains(err.Error(), "No such container") {
 
-					if server.TemplateID != "" {
+					if server.TemplateID != nil {
+						var template database.Template
+						if err := s.Database.Where("id = ?", server.TemplateID).First(&template).Error; err != nil {
+							return fmt.Errorf("failed to load template: %w", err)
+						}
+
+						server.Template = &template
 
 						err = server.Template.MoveToServer(server.Name)
 

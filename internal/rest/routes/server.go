@@ -3,26 +3,16 @@ package routes
 import (
 	"minicloud/internal/database"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/datatypes"
 )
 
 func (r *Router) CreateServer(c *fiber.Ctx) error {
 
-	//database.CreateServerRequest{}
+	// Initialize the req variable properly
+	req := new(database.CreateServerRequest)
 
-	req := &database.CreateServerRequest{
-		Name:     c.Query("name"),
-		Port:     c.QueryInt("port"),
-		Lobby:    c.QueryBool("lobby"),
-		Template: c.Query("template"),
-
-		CustomData: datatypes.JSON([]byte(c.Query("custom_data"))),
-	}
-
-	validate := validator.New()
-	err := validate.Struct(req)
+	// Parse body
+	err := c.BodyParser(req)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),

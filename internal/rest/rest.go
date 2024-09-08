@@ -27,8 +27,14 @@ func (b *BackendService) Start() {
 
 	router := routes.NewRouter(b.DockerService, app)
 
-	app.Post("/server", router.CreateServer)
-	app.Post("/template", router.CreateTemplate)
+	// set json as default response type
+	app.Use(func(c *fiber.Ctx) error {
+		c.Set("Content-Type", "application/json")
+		return c.Next()
+	})
+
+	app.Post("/servers", router.CreateServer)
+	app.Post("/templates", router.CreateTemplate)
 
 	if b.Config.AuthToken != "" {
 		app.Use(func(c *fiber.Ctx) error {
@@ -54,7 +60,7 @@ func (b *BackendService) Start() {
 
 	router.Fiber = app
 
-	err := app.Listen(strconv.Itoa(b.Config.Port))
+	err := app.Listen(":" + strconv.Itoa(b.Config.Port))
 
 	if err != nil {
 		panic(err)
